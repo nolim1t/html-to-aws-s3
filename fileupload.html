@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Test Fileupload</title>
+    </head>
+    <body>
+    <script
+      			  src="http://code.jquery.com/jquery-2.2.3.min.js"
+      			  integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo="
+      			  crossorigin="anonymous"></script>
+    <script>
+    function ISODateString(d){
+     function pad(n){return n<10 ? '0'+n : n}
+     return d.getUTCFullYear()+'-'
+          + pad(d.getUTCMonth()+1)+'-'
+          + pad(d.getUTCDate())+'T'
+          + pad(d.getUTCHours())+':'
+          + pad(d.getUTCMinutes())+':'
+          + pad(d.getUTCSeconds())+'Z'}
+
+    function generateCorsPolicy() {
+      // Modify date function
+      Date.prototype.addHours = function(h) {
+         this.setTime(this.getTime() + (h*60*60*1000));
+         return this;
+      }
+
+      var thisDate = new Date();
+      thisDate = thisDate.addHours(1);
+      var corspolicy = JSON.stringify({
+        'expiration': ISODateString(thisDate),
+        'conditions': [
+          {'acl': 'public-read'},
+          {'bucket': 'YOURS3BUCKETHERE'},
+          ["starts-with", "$Content-Type", ""],
+          ["starts-with","$key",""],
+          ["content-length-range", 0, 524288000]
+        ]
+      });
+      return btoa(corspolicy);
+    }
+    </script>
+    <form id="form1" enctype="multipart/form-data" method="post">
+     <div class="row">
+       <label for="slugtitle">Enter in a directory name to upload</label>
+       <input type="text" name="slugtitle" id="slugtitle" value="/" /> <br />
+       <label for="file">Select a File to Upload</label><br />
+       <input type="file" name="file" id="file" />
+     </div>
+     <div id="fileName"></div>
+     <div id="fileSize"></div>
+     <div id="fileType"></div>
+     <div class="row">
+       <input type="button" onclick="uploadFile(); " value="Upload" />
+     </div>
+     <div id="progressNumber"></div>
+
+      <script>
+        // Upload functions
+        function uploadFile() {
+            var file = document.getElementById('file').files[0];
+            var directory = $("#slugtitle").val();
+            if (directory == null || directory == undefined || directory == "/") {
+              directory = 'uploads/';
+            } else {
+              directory = 'uploads' + $("#slugtitle").val() + '/';
+            }
+            if (file == null) {
+              return alert("No files selected");
+            }
+
+            var key = directory + file.name;
+            var fd = new FormData();
+            fd.append('policy', generateCorsPolicy());
+            $.ajax({
+              type: 'GET',
+              url: "https://POLICYURL/1/generate-policy?path=" + encodeURIComponent(key) + "&file-type=" + encodeURIComponent(file.type) + '&policystring=' + encodeURIComponent(generateCorsPolicy()),
+              success: function(data, status, xhr) {
+                // xhr.responseText
+                const jsonResponse = JSON.parse(xhr.responseText);
+                fd.append('key', key);
+                fd.append('AWSAccessKeyId', jsonResponse["AWSAccessKeyId"]);
+                if (jsonResponse["policyencoded"] !== undefined) {
+                  fd.append('signature', jsonResponse["policyencoded"]);
+                } else {
+                  fd.append('signature', jsonResponse["Signature"]);
+                }
+                fd.append('acl', jsonResponse["x-amz-acl"]);
+                fd.append('Content-Type', file.type);
+                fd.append("file",file);
+
+                $("#progressNumber").html("<strong>Uploading...</strong>")
+                $.ajax({
+                  url: "https://s3.amazonaws.com/YOURS3BUCKETHERE",
+                  data: fd,
+                  type: "POST",
+                  processData: false,
+                  contentType: false,
+                  success: function(uploaddata, uploadstatus, uploadxhr) {
+                    console.log("Done");
+                    $("#progressNumber").html("<strong>File uploaded</strong>");
+                  },
+                  error: function(uploadXHR, uploadStatus, uploaderror) {
+                    console.log("Upload Error");
+                    console.log(uploadStatus);
+                    console.log(uploadXHR.responseText);
+                    $("#progressNumber").html("<strong>Error uploading the file</strong>")
+                  }
+                });
+
+              },
+              error: function(jqXHR, status, error) {
+                console.log("Error");
+                console.log(jqXHR);
+                console.log(jqXHR.statusCode());
+                console.log(status);
+                $("#progressNumber").html("<strong>Error calling signing function</strong>")
+              }
+            });
+          }
+      </script>
+    </body>
+</html>
