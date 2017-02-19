@@ -33,7 +33,7 @@
         'expiration': ISODateString(thisDate),
         'conditions': [
           {'acl': 'public-read'},
-          {'bucket': 'incoming.itinerantfoodie.com'},
+          {'bucket': 'YOURS3BUCKETHERE'},
           ["starts-with", "$Content-Type", ""],
           ["starts-with","$key",""],
           ["content-length-range", 0, 524288000]
