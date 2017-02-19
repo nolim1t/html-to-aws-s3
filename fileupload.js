@@ -17,7 +17,7 @@ function uploadFile() {
   fd.append('policy', generateCorsPolicy());
   $.ajax({
     type: 'GET',
-    url: "https://tlk8yqeq3h.execute-api.us-east-1.amazonaws.com/1/generate-policy?path=" + encodeURIComponent(key) + "&file-type=" + encodeURIComponent(file.type) + '&policystring=' + encodeURIComponent(generateCorsPolicy()),
+    url: "https://POLICYURLHERE?path=" + encodeURIComponent(key) + "&file-type=" + encodeURIComponent(file.type) + '&policystring=' + encodeURIComponent(generateCorsPolicy()),
     success: function(data, status, xhr) {
       // xhr.responseText
       const jsonResponse = JSON.parse(xhr.responseText);
@@ -56,7 +56,7 @@ function uploadFile() {
           }, false);
           return xhr;
         },
-        url: "https://s3.amazonaws.com/incoming.itinerantfoodie.com",
+        url: "https://s3.amazonaws.com/YOURS3BUCKETHERE",
         data: fd,
         type: "POST",
         processData: false,
@@ -64,8 +64,8 @@ function uploadFile() {
         success: function(uploaddata, uploadstatus, uploadxhr) {
           console.log("Done");
           $("#progressNumber").html("<strong>File uploaded</strong>. It should appear as the following versions: <a href='https://s3.amazonaws.com/incoming.itinerantfoodie.com/" + key + "'>Original</a> or <a href='https://s3.amazonaws.com/images.itinerantfoodie.com/" + key + "'>resized version</a>");
-          $('#codearea1').val("[Resized Link](https://s3.amazonaws.com/images.itinerantfoodie.com/" + key + ")");
-          $('#codearea2').val("[Resized CDN ink](https://images.itinerantfoodie.com/" + key + ")");
+          $('#codearea1').val("[Resized Link](https://s3.amazonaws.com/YOURS3BUCKETHERE/" + key + ")");
+          $('#codearea2').val("[Resized CDN ink](https://YOURS3BUCKETHERE/" + key + ")");
           $("#uploadbutton").attr("disabled", false);
         },
         error: function(uploadXHR, uploadStatus, uploaderror) {
