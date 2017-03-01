@@ -1,3 +1,35 @@
+// Helper functions
+function ISODateString(d){
+ function pad(n){return n<10 ? '0'+n : n}
+ return d.getUTCFullYear()+'-'
+      + pad(d.getUTCMonth()+1)+'-'
+      + pad(d.getUTCDate())+'T'
+      + pad(d.getUTCHours())+':'
+      + pad(d.getUTCMinutes())+':'
+      + pad(d.getUTCSeconds())+'Z'}
+
+function generateCorsPolicy() {
+  // Modify date function
+  Date.prototype.addHours = function(h) {
+     this.setTime(this.getTime() + (h*60*60*1000));
+     return this;
+  }
+
+  var thisDate = new Date();
+  thisDate = thisDate.addHours(1);
+  var corspolicy = JSON.stringify({
+    'expiration': ISODateString(thisDate),
+    'conditions': [
+      {'acl': 'public-read'},
+      {'bucket': 'S3BUCKETHERE'},
+      ["starts-with", "$Content-Type", ""],
+      ["starts-with","$key",""],
+      ["content-length-range", 0, 524288000]
+    ]
+  });
+  return btoa(corspolicy);
+}
+
 // Upload functions
 function uploadFile() {
   var file = document.getElementById('file').files[0];
@@ -12,12 +44,19 @@ function uploadFile() {
   }
   $("#uploadbutton").attr("disabled", true);
 
+  if (file.type.toString().indexOf("image") == -1) {
+    return alert("File must be an image!");
+  }
+
+
   var key = directory + file.name;
+  if (key.indexOf(".JPG") !== -1) key = key.replace(".JPG", ".png"); // Change the extension
+
   var fd = new FormData();
   fd.append('policy', generateCorsPolicy());
   $.ajax({
     type: 'GET',
-    url: "https://POLICYURLHERE?path=" + encodeURIComponent(key) + "&file-type=" + encodeURIComponent(file.type) + '&policystring=' + encodeURIComponent(generateCorsPolicy()),
+    url: "https://APIENDPOINTHERE/1/generate-policy?path=" + encodeURIComponent(key) + "&file-type=" + encodeURIComponent(file.type) + '&policystring=' + encodeURIComponent(generateCorsPolicy()),
     success: function(data, status, xhr) {
       // xhr.responseText
       const jsonResponse = JSON.parse(xhr.responseText);
@@ -56,16 +95,16 @@ function uploadFile() {
           }, false);
           return xhr;
         },
-        url: "https://s3.amazonaws.com/YOURS3BUCKETHERE",
+        url: "https://s3.amazonaws.com/S3BUCKETHERE",
         data: fd,
         type: "POST",
         processData: false,
         contentType: false,
         success: function(uploaddata, uploadstatus, uploadxhr) {
           console.log("Done");
-          $("#progressNumber").html("<strong>File uploaded</strong>. It should appear as the following versions: <a href='https://s3.amazonaws.com/incoming.itinerantfoodie.com/" + key + "'>Original</a> or <a href='https://s3.amazonaws.com/images.itinerantfoodie.com/" + key + "'>resized version</a>");
-          $('#codearea1').val("[Resized Link](https://s3.amazonaws.com/YOURS3BUCKETHERE/" + key + ")");
-          $('#codearea2').val("[Resized CDN ink](https://YOURS3BUCKETHERE/" + key + ")");
+          $("#progressNumber").html("<strong>File uploaded successfully!</strong>");
+          $('#codearea1').val("[Resized Link](https://s3.amazonaws.com/S3BUCKETHERE/" + key + ")");
+          $('#codearea2').val("[Resized CDN ink](https://S3BUCKETHERE/" + key + ")");
           $("#uploadbutton").attr("disabled", false);
         },
         error: function(uploadXHR, uploadStatus, uploaderror) {
