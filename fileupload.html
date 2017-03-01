@@ -1,57 +1,51 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>itinerantfoodie.com Uploader</title>
+        <title>Uploader</title>
     		<meta charset="utf-8" />
         <script
                   src="//code.jquery.com/jquery-2.2.3.min.js"
                   integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo="
                   crossorigin="anonymous"></script>
+        <script src="fileupload.js"></script>
     		<meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
     <body>
     <script>
-    function ISODateString(d){
-     function pad(n){return n<10 ? '0'+n : n}
-     return d.getUTCFullYear()+'-'
-          + pad(d.getUTCMonth()+1)+'-'
-          + pad(d.getUTCDate())+'T'
-          + pad(d.getUTCHours())+':'
-          + pad(d.getUTCMinutes())+':'
-          + pad(d.getUTCSeconds())+'Z'}
-
-    function generateCorsPolicy() {
-      // Modify date function
-      Date.prototype.addHours = function(h) {
-         this.setTime(this.getTime() + (h*60*60*1000));
-         return this;
-      }
-
-      var thisDate = new Date();
-      thisDate = thisDate.addHours(1);
-      var corspolicy = JSON.stringify({
-        'expiration': ISODateString(thisDate),
-        'conditions': [
-          {'acl': 'public-read'},
-          {'bucket': 'YOURS3BUCKETHERE'},
-          ["starts-with", "$Content-Type", ""],
-          ["starts-with","$key",""],
-          ["content-length-range", 0, 524288000]
-        ]
-      });
-      return btoa(corspolicy);
-    }
+      $( document ).ready(function() {
+        console.log("Page has been fully loaded");
+        var slugtitle;
+        if (typeof(Storage) !== "undefined") {
+          // Register slugtitle event
+          $( "#slugtitle" ).change(function() {
+            slugtitle = $( "#slugtitle" ).val();
+            console.log("Change detected in slug:  " + slugtitle);
+            if (typeof(Storage) !== "undefined") {
+              localStorage.setItem("slugtitle", slugtitle);
+            }
+          });
+          $( "#slugtitle" ).val("/");
+          if (localStorage.getItem("slugtitle") !== undefined && localStorage.getItem("slugtitle") !== null) {
+            if (localStorage.getItem("slugtitle") == '') {
+              $( "#slugtitle" ).val("/");
+            } else {
+              $( "#slugtitle" ).val(localStorage.getItem("slugtitle"));
+            }
+          } else {
+            $( "#slugtitle" ).val("/");
+          }
+        }
+      }); // END: Document load
     </script>
     <header>
-      <h2>Website Uploader</h2>
+      <h2>Uploader</h2>
     </header>
-    <p>This uploads images to a predetermined website</p>
     <form id="form1" enctype="multipart/form-data" method="post">
      <div class="row">
        <label for="slugtitle">Enter in a directory name to upload</label>
        <input type="text" name="slugtitle" id="slugtitle" value="/" /> <br />
        <label for="file">Select a File to Upload</label><br />
-       <input type="file" name="file" id="file" />
+       <input type="file" name="file" id="file" accept="image/*;capture=camera" />
      </div>
      <div id="fileName"></div>
      <div id="fileSize"></div>
@@ -63,6 +57,5 @@
      <h3>Markdown links</h3>
      <textarea name="CodeArea1" cols="60" rows="2" id="codearea1"></textarea><br />
      <textarea name="CodeArea2" cols="60" rows="2" id="codearea2"></textarea>
-    <script src="fileupload.js"></script>
     </body>
 </html>
